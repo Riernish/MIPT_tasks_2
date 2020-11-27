@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 		}
 
 	}
-	struct pollfd* pollfds = (struct pollfd*)calloc(n, sizeof(struct pollfd));
+	struct pollfd* pollfds = (struct pollfd*)malloc(n * sizeof(struct pollfd));
 	if (pollfds == NULL) {
 
 		perror("Calloc dont sdelalsya\n");
@@ -45,6 +45,7 @@ int main(int argc, char** argv) {
 
 		pollfds[i].fd = fds[i];
 		pollfds[i].events = POLLIN;
+		pollfds[i].revents = 0;
 	}
 	
 	char buffer[1000] = {};
