@@ -1,91 +1,52 @@
 #include "my_server.h"
 
 int main() {
-    int sk, ret, ret_2;
-    struct sockaddr_in name = {0};
-    char ip_adr[20] = {0};
-    strncpy(ip_adr, MY_ADDRESS, sizeof(MY_ADDRESS));
+    int sk, ret;
 
-    sk = socket(AF_INET, SOCK_STREAM, 0);
+    sk = socket(AF_INET, SOCK_DGRAM, 0);
     if (sk < 0) {
         perror("Unable to create socket");
         return 1;
     }
+    struct in_addr in_ad = { inet_addr (MY_IP )};
+    struct sockaddr_in name = { AF_INET, PORT, in_ad };
 
-    name.sin_family = AF_INET;
-    name.sin_port = htons(23456);
-    name.sin_addr.s_addr = inet_addr(ip_adr);
+    struct sockaddr* name_ = (struct sockaddr*)&name;
+    socklen_t sock_len = sizeof (struct sockaddr_in);
 
-    ret = bind(sk, (struct sockaddr*)&name, sizeof(name));
+
+
+
+    ret = bind(sk, name_,  sock_len);
     if (ret < 0) {
-        perror("Unable to create socket");
+        perror("Unable to bind socket");
         close(sk);
         return 1;
     }
 
-    ret = listen(sk, 20);
-    if (ret){
-        perror("Unable to listen");
-        close(sk);
-        return 1;
-    }
+    while(1) {
 
+        char buffer[BUFSZ] = {0};
 
+        ret = recvfrom(sk , buffer , BUFSZ , 0 , name_ , &sock_len);
+        if (ret == -1) {
+            perror("Unable to read client\n");
+            break;
+        }
 
+        if (strcmp(buffer, "CLOSE_SERVER") == 0) {
 
-        while(1) {
-            int client_sk;
-            char buffer[BUFSZ] = {0};
-
-            client_sk = accept (sk, NULL, NULL);
-            if (client_sk < 0) {
-                perror("Unable to accept");
-                exit(1);
-            }
-
-            ret = read(client_sk, buffer, BUFSZ);
-            buffer[ret - 1] = '\0';
-
-            if (ret < 0 || ret >= BUFSZ) {
-                printf("Unexpected red error or overflow %d\n", ret);
-                break;
-
-            }
-            if (strcmp(buffer, "EXIT") == 0) {
-
-                close(client_sk);
-                break;
-            } else if (strcmp(buffer, "PRINT") == 0) {
-
-                ret_2 = ret + read(client_sk, buffer, BUFSZ);
-                buffer[ret_2 - 1] = '\0';
-                if (ret_2 < 0 || ret_2 >= BUFSZ) {
-                    printf("Unexpected red error or overflow %d\n", ret);
-                    buffer[0] = '\0';
-
-                    break;
-
-                }
-                printf("%s", buffer);
-                buffer[0] = '\0';
-                close(client_sk);
-            } else {
-
-                printf("Unknown command: %s", buffer);
-                buffer[0] = '\0';
-                close(client_sk);
-
-            }
-
-
-
-            printf("%s\n", buffer);
-            buffer[0] = '\0';
-
-            close(client_sk);
+            break;
         }
 
 
+        printf("%s\n", buffer);
+        buffer[0] = '\0';
 
-        return 0;
+
+    }
+    close(sk);
+
+
+    return 0;
 }
