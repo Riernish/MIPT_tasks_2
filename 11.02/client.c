@@ -3,55 +3,54 @@
 #define DUMMY_STR "London is the capital of Great Britain\n"
 
 int main(int argc, char** argv) {
+        if (argc < 2) {
+            perror("Too few arguments\n");
+            exit(1);
+        }
 
-    if (argc < 2) {
+        int sk = socket (AF_INET , SOCK_DGRAM , 0);
 
-        perror("Too few arguments\n");
-        exit(1);
+        char* adress = NULL;
+        if (strcmp(argv[1], "self") == 0) {
+            adress = MY_ADDRESS;
+        }
+        else
+            adress = argv[1];
+
+        const struct in_addr in_ad = { inet_addr (adress )};
+        const struct sockaddr_in name = { AF_INET, PORT, in_ad };
+        struct sockaddr* name_ = (struct sockaddr*)&name;
+        socklen_t sock_len = sizeof (struct sockaddr_in);
+        int ret = 0;
+
+
+        char buffer[BUFSZ] = {};
+
+        while (strcmp (buffer , "CLOSE_SERVER") != 0)
+        {
+
+
+            if (fgets(buffer, BUFSZ, stdin)== NULL) {
+                perror("Ne chitayetsya stroka \n");
+                exit(228);
+            }
+
+            size_t len = strlen (buffer) - 1;
+            buffer[len] = '\0'; //delete last '\n' after fgets
+
+            if (strcmp (buffer , "EXIT") == 0)
+                break;
+
+
+            ret = sendto(sk, buffer, len, 0, name_, sock_len);
+            if (ret == -1) {
+                perror("Ne mogy pisat'\n");
+                exit(228);
+
+            }
+
+        }
+
+        close (sk);
+        return 0;
     }
-
-
-    int sk, ret;
-    struct sockaddr_in name = {0};
-
-    sk = socket(AF_INET, SOCK_STREAM, 0);
-    if (sk < 0) {
-        perror("Unable to create socket");
-        exit(1);
-    }
-
-    name.sin_family = AF_INET;
-    name.sin_port = htons(23456);
-    name.sin_addr.s_addr = inet_addr(argv[1]);
-
-    if (name.sin_addr.s_addr == INADDR_NONE) {
-
-        perror("Unable to connect to socket");
-        exit(1);
-
-
-    }
-
-    char buffer[BUFSZ-1] = {0};
-    ret = read (STDIN_FILENO, buffer, BUFSZ - 1);
-    buffer[ret - 1] = '\0';
-
-    if (ret < 0 || ret >= BUFSZ) {
-        printf("Unexpected red error or overflow %d\n", ret);
-        exit(1);
-    }
-
-    ret = connect(sk, (struct sockaddr*)&name, sizeof(name));
-    if (ret) {
-        perror("Unable to connect to socket");
-        exit(1);
-    }
-
-    ret = write(sk, buffer, BUFSZ - 1);
-    if (ret < 0) {
-        perror("Unable to write");
-    }
-    
-
-    return 0;
-}
