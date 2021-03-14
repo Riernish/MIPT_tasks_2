@@ -16,5 +16,7 @@
 #define PATH "/tmp/mysock"
 #define BUFSZ 256
 #define MY_ADDRESS "127.0.0.1"
+#define MY_IP "127.0.0.1"
+#define PORT 23456
 
 #endif
