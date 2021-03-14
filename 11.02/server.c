@@ -1,5 +1,7 @@
 #include "my_server.h"
 
+int check_buffer(const char* buffer);
+
 int main() {
     int sk, ret;
 
@@ -38,15 +40,38 @@ int main() {
 
             break;
         }
-
-
-        printf("%s\n", buffer);
-        buffer[0] = '\0';
-
+       if (check_buffer(buffer) == -1)
+           break;
 
     }
     close(sk);
 
+
+    return 0;
+}
+int check_buffer(const char* buffer) {
+    int err = 0;
+    if (strcmp (buffer , "ls") == 0) {
+        pid_t pd = fork();
+        if (pd == 0) {
+            execlp("ls", "ls", NULL);
+            fflush(stdout);
+        }
+    } else if (buffer[0] == 'c' && buffer[1] == 'd') {
+
+        if (buffer[2] == ' ')
+            err = chdir(buffer + 3);
+        else if (buffer[2] == '\0')
+            err = chdir("/");
+        else
+            err = -1;
+
+
+        if (err == -1) {
+            printf("Can't do this with directories!\n");
+        }
+    } else
+        printf ("There is no such command: %s\n", buffer);
 
     return 0;
 }
